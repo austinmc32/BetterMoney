@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Statement Analyzer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Add OCR and PDF libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Bank Statement Analyzer</h1>
+            <p>Upload your bank statement to get insights about your spending and earnings</p>
+        </header>
+        
+        <main>
+            <section id="upload-section">
+                <div class="upload-container" id="drop-area">
+                    <h2>Upload Bank Statement</h2>
+                    <p>Supported formats: PDF, JPG, PNG</p>
+                    <form>
+                        <input type="file" id="file-input" accept=".pdf,.jpg,.jpeg,.png" hidden>
+                        <label for="file-input" class="upload-button">Choose File</label>
+                        <p id="file-name">No file selected</p>
+                    </form>
+                    <p>Or drag and drop your file here</p>
+                </div>
+            </section>
+            
+            <section id="loading-section" class="hidden">
+                <div class="progress-container">
+                    <div class="loader"></div>
+                    <p id="progress-status">Processing your statement...</p>
+                    <div class="progress-bar">
+                        <div id="progress-bar-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Add verification section before results section -->
+            <section id="verification-section" class="hidden">
+                <div id="verification-container"></div>
+            </section>
+            
+            <section id="results-section" class="hidden">
+                <h2>Financial Report</h2>
+                
+                <!-- Add tab bar for report management -->
+                <div class="report-tabs-container">
+                    <div class="report-tabs" id="report-tabs">
+                        <button class="tab-btn active" data-tab="report-1">Report 1</button>
+                        <!-- Additional tabs will be added dynamically -->
+                        <button class="tab-btn add-report-btn" id="add-report-btn">+ Add Report</button>
+                    </div>
+                    
+                    <div class="report-actions">
+                        <button id="combine-reports-btn" class="secondary-button">Combine Reports</button>
+                        <button id="remove-report-btn" class="btn-danger small-btn" title="Remove current report" disabled>Remove</button>
+                    </div>
+                </div>
+                
+                <!-- Reports container - each report will be in its own tab panel -->
+                <div class="reports-container" id="reports-container">
+                    <!-- First report (always exists) -->
+                    <div class="report-panel active" id="report-1-panel">
+                        <!-- The existing summary cards, charts, and transactions table will go here -->
+                        <div class="summary-cards">
+                            <div class="card">
+                                <h3>Total Income</h3>
+                                <p id="total-income">$0.00</p>
+                            </div>
+                            <div class="card">
+                                <h3>Total Expenses</h3>
+                                <p id="total-expenses">$0.00</p>
+                            </div>
+                            <div class="card">
+                                <h3>Net Flow</h3>
+                                <p id="net-flow">$0.00</p>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <div class="chart-card">
+                                <h3>Income vs Expenses</h3>
+                                <canvas id="income-expense-chart"></canvas>
+                            </div>
+                            <div class="chart-card">
+                                <h3>Spending Categories</h3>
+                                <canvas id="category-chart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="transactions-container">
+                            <h3>Recent Transactions</h3>
+                            <div class="transaction-filters">
+                                <button class="filter-btn active" data-filter="all">All</button>
+                                <button class="filter-btn" data-filter="income">Income</button>
+                                <button class="filter-btn" data-filter="expense">Expenses</button>
+                            </div>
+                            <div class="transactions-table-wrapper">
+                                <table id="transactions-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Description</th>
+                                            <th>Category</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="transactions-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional report panels will be added dynamically -->
+                    
+                    <!-- Combined report panel -->
+                    <div class="report-panel" id="combined-report-panel">
+                        <div class="summary-cards">
+                            <div class="card">
+                                <h3>Total Income (All Reports)</h3>
+                                <p id="combined-total-income">$0.00</p>
+                            </div>
+                            <div class="card">
+                                <h3>Total Expenses (All Reports)</h3>
+                                <p id="combined-total-expenses">$0.00</p>
+                            </div>
+                            <div class="card">
+                                <h3>Net Flow (All Reports)</h3>
+                                <p id="combined-net-flow">$0.00</p>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <div class="chart-card">
+                                <h3>Combined Income vs Expenses</h3>
+                                <canvas id="combined-income-expense-chart"></canvas>
+                            </div>
+                            <div class="chart-card">
+                                <h3>Combined Spending Categories</h3>
+                                <canvas id="combined-category-chart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="transactions-container">
+                            <h3>All Transactions</h3>
+                            <div class="transaction-filters">
+                                <button class="filter-btn active" data-filter="all">All</button>
+                                <button class="filter-btn" data-filter="income">Income</button>
+                                <button class="filter-btn" data-filter="expense">Expenses</button>
+                            </div>
+                            <div class="transactions-table-wrapper">
+                                <table id="combined-transactions-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Description</th>
+                                            <th>Category</th>
+                                            <th>Amount</th>
+                                            <th>Report</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="combined-transactions-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="new-upload-btn" class="upload-button">Analyze Another Statement</button>
+                
+                <!-- OCR debug container remains unchanged -->
+                <div class="ocr-debug-container">
+                    <button id="toggle-ocr-text" class="secondary-button">Show OCR Text</button>
+                    <div id="ocr-text-container" class="hidden">
+                        <h4>OCR Extracted Text</h4>
+                        <pre id="ocr-text"></pre>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>This application runs entirely in your browser. Your data never leaves your computer.</p>
+        </footer>
+    </div>
+
+    <!-- Replace parser.js with ocrParser.js -->
+    <script src="ocrParser.js"></script>
+    <script src="transactionVerifier.js"></script>
+    <script src="analyzer.js"></script>
+    <script src="report.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
